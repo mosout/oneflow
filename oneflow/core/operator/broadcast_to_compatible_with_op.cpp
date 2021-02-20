@@ -47,11 +47,23 @@ class BroadcastToCompatibleWithOp final : public Operator {
     CHECK(op_conf().has_broadcast_to_compatible_with_conf());
     EnrollInputBn("x");
     EnrollRepeatedInputBn("compatible", false);
-    FOR_RANGE(int, i, 0, op_conf().broadcast_to_compatible_with_conf().compatible_size()) {
-      InputBlobModifier* modifer = MutInputBlobModifier4Ibn(GenRepeatedBn("compatible", i));
-      modifer->set_use_header_only(true);
-    }
     EnrollOutputBn("y");
+  }
+
+  Maybe<void> InferLogicalOutBlobDescs(
+      const std::function<BlobDesc*(const std::string&)>& BlobDesc4BnInOp,
+      const ParallelDesc& parallel_desc) const override {
+    int64_t num_compatibles = op_conf().broadcast_to_compatible_with_conf().compatible_size();
+    const BlobDesc* x_desc = BlobDesc4BnInOp("x");
+    Shape broadcasted_shape(x_desc->shape());
+    FOR_RANGE(int64_t, i, 0, num_compatibles) {
+      const BlobDesc* compatible_i = BlobDesc4BnInOp(GenRepeatedBn("compatible", i));
+      GetBroadcastShape(broadcasted_shape, compatible_i->shape(), &broadcasted_shape);
+    }
+    BlobDesc* y_desc = BlobDesc4BnInOp("y");
+    y_desc->CopyFrom(*x_desc);
+    y_desc->mut_shape() = broadcasted_shape;
+    return Maybe<void>::Ok();
   }
 
   Maybe<void> InferOutBlobDescs(std::function<BlobDesc*(const std::string&)> GetBlobDesc4BnInOp,
@@ -65,7 +77,7 @@ class BroadcastToCompatibleWithOp final : public Operator {
       GetBroadcastShape(broadcasted_shape, compatible_i->shape(), &broadcasted_shape);
     }
     BlobDesc* y_desc = GetBlobDesc4BnInOp("y");
-    y_desc->CopyMetaFrom(*x_desc);
+    y_desc->CopyFrom(*x_desc);
     y_desc->mut_shape() = broadcasted_shape;
     return Maybe<void>::Ok();
   }

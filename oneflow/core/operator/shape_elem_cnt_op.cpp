@@ -50,8 +50,16 @@ HashSet<int32_t> GetInclusiveAxes(const ShapeElemCntOpConf& conf, int32_t num_ax
 }  // namespace
 
 void ShapeElemCntOp::InitFromOpConf() {
-  EnrollInputBn("x", false)->set_use_header_only(true);
+  EnrollInputBn("x", false);
   EnrollOutputBn("y", false);
+}
+
+Maybe<void> ShapeElemCntOp::InferLogicalOutBlobDescs(
+    const std::function<BlobDesc*(const std::string&)>& BlobDesc4BnInOp,
+    const ParallelDesc& parallel_desc) const {
+  BlobDesc4BnInOp("y")->set_data_type(op_conf().shape_elem_cnt_conf().data_type());
+  BlobDesc4BnInOp("y")->mut_shape() = Shape({1});
+  return Maybe<void>::Ok();
 }
 
 Maybe<void> ShapeElemCntOp::InferOutBlobDescs(

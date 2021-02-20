@@ -27,6 +27,9 @@ class BoxingOp final : public Operator {
   ~BoxingOp() = default;
 
   void InitFromOpConf() override;
+  Maybe<void> InferLogicalOutBlobDescs(
+      const std::function<BlobDesc*(const std::string&)>& BlobDesc4BnInOp,
+      const ParallelDesc& parallel_desc) const override;
   Maybe<void> InferOutBlobDescs(std::function<BlobDesc*(const std::string&)> GetBlobDesc4BnInOp,
                                 const ParallelContext* parallel_ctx,
                                 const SbpSignature* sbp_signature) const override;
@@ -47,7 +50,7 @@ class BoxingOp final : public Operator {
   LogicalBlobId lbi4ibn(const std::string& input_bn) const override;
   LogicalBlobId lbi4obn(const std::string& output_bn) const override;
   Maybe<void> InferTmpBlobDesc(std::function<BlobDesc*(const std::string&)> GetBlobDesc4BnInOp,
-                               DimVector* data_tmp_vec_ptr) const;
+                               DimVector* data_tmp_vec_ptr, bool is_logical) const;
   Symbol<OperatorConf> GetOpConfWithoutOpNameAndLbn() const override;
   void EmplaceLbi2Obn(const LogicalBlobId& lbi, const std::string& obn) override {}
 };

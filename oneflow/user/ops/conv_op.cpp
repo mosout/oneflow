@@ -30,11 +30,6 @@ Maybe<void> InferTensorDesc4Conv(user_op::InferContext* ctx) {
   CHECK_EQ_OR_RETURN(NDims, kernel_size.size());
   int32_t filters = ctx->Attr<int32_t>("filters");
   size_t idx_offset = IdxOffset(data_format);
-
-  // only support data parallel
-  CHECK_OR_RETURN(ctx->parallel_ctx().parallel_num() == 1
-                  || ctx->SbpParallel4ArgNameAndIndex("weight", 0).has_broadcast_parallel());
-
   {
     const auto& padding_before = ctx->Attr<std::vector<int32_t>>("padding_before");
     auto dilation_rate = ctx->Attr<std::vector<int32_t>>("dilation_rate");
@@ -306,12 +301,6 @@ REGISTER_USER_OP("conv_data_grad")
     .Attr<std::vector<int32_t>>("dilation_rate")
     .Attr<int32_t>("groups")
     .SetCheckAttrFn(CheckAttr<0>)
-    .SetInputArgModifyFn([](user_op::GetInputArgModifier GetInputArgModifierFn,
-                            const user_op::UserOpConfWrapper&) {
-      user_op::InputArgModifier* x_like = GetInputArgModifierFn("x_like", 0);
-      CHECK_NOTNULL(x_like);
-      x_like->set_use_header_only(true);
-    })
     .SetTensorDescInferFn([](user_op::InferContext* ctx) -> Maybe<void> {
       const user_op::TensorDesc* dy = ctx->TensorDesc4ArgNameAndIndex("dy", 0);
       const user_op::TensorDesc* x_like = ctx->TensorDesc4ArgNameAndIndex("x_like", 0);
