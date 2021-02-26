@@ -168,27 +168,15 @@ void DeleteObject(const std::shared_ptr<InstructionsBuilder>& x,
   return x->DeleteObject(blob_object).GetOrThrow();
 }
 
-void InsertRemoveForeignCallbackInstruction(const std::shared_ptr<InstructionsBuilder>& x,
-                                            int64_t object_id, int64_t callback_id) {
-  return x->InsertRemoveForeignCallbackInstruction(object_id, callback_id).GetOrThrow();
-}
-
-void FetchBlobHeader(const std::shared_ptr<InstructionsBuilder>& x,
-                     const std::shared_ptr<compatible_py::BlobObject>& blob_object,
-                     int64_t callback_id) {
-  return x->FetchBlobHeader(blob_object, callback_id).GetOrThrow();
-}
-
-void FetchBlobBody(const std::shared_ptr<InstructionsBuilder>& x,
-                   const std::shared_ptr<compatible_py::BlobObject>& blob_object,
-                   int64_t callback_id) {
-  return x->FetchBlobBody(blob_object, callback_id).GetOrThrow();
-}
-
-void FeedBlob(const std::shared_ptr<InstructionsBuilder>& x,
-              const std::shared_ptr<compatible_py::BlobObject>& blob_object, int64_t callback_id) {
-  return x->FeedBlob(blob_object, callback_id).GetOrThrow();
-}
+// signature of python func _FindOrCreateDelegateBlobObject, it will be removed after blobcache is
+// migrated
+using FindOrCreateDelegateBlobObjectFun = std::function<std::shared_ptr<compatible_py::BlobObject>(
+    const std::shared_ptr<InstructionsBuilder>&,
+    const std::function<std::shared_ptr<compatible_py::BlobObject>(
+        const std::shared_ptr<compatible_py::BlobObject>&,
+        const std::shared_ptr<compatible_py::OpArgParallelAttribute>&)>&,
+    const std::shared_ptr<compatible_py::BlobObject>&,
+    const std::shared_ptr<compatible_py::OpArgParallelAttribute>&)>;
 
 void StatefulCall(
     const std::shared_ptr<InstructionsBuilder>& x,
@@ -348,17 +336,20 @@ ONEFLOW_API_PYBIND11_MODULE("deprecated", m) {
       .def("RawStatelessCall", &RawStatelessCall)
       .def("Build121To", &Build121To);
 
-  m.def("LogicalRun",
-        [](const std::function<void(const std::shared_ptr<InstructionsBuilder>&)>& build) {
-          return LogicalRun(build).GetOrThrow();
-        },
-        py::call_guard<py::gil_scoped_release>());
+  // these API will be removed when InstructionsBuilder is refactor competely
+  py::module_ vm_sub_module = m.def_submodule("vm");
 
-  m.def("PhysicalRun",
-        [](const std::function<void(const std::shared_ptr<InstructionsBuilder>&)>& build) {
-          return PhysicalRun(build).GetOrThrow();
-        },
-        py::call_guard<py::gil_scoped_release>());
+  vm_sub_module.def("DelObjectOperand", &DelObjectOperand);
+  vm_sub_module.def("MutOperand", &MutOperand);
+  vm_sub_module.def("Int64Operand", &Int64Operand);
+
+  vm_sub_module.def("InitSymbolOperand", &InitSymbolOperand);
+  vm_sub_module.def("SymbolOperand", &SymbolOperand);
+  vm_sub_module.def("ConstOperand", &ConstOperand);
+
+  vm_sub_module.def("OperandSeparator", &OperandSeparator);
+  vm_sub_module.def("Uint64Operand", &Uint64Operand);
+  vm_sub_module.def("Mut2Operand", &Mut2Operand);
 }
 
 }  // namespace oneflow
