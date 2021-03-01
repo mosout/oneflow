@@ -92,7 +92,8 @@ Maybe<void> XrtLaunchOp::InferOutBlobDescs(
     DeviceType device_type = JUST(DeviceType4DeviceTag(op_conf().device_tag()));
     auto graph =
         xrt::BuildXrtGraph(launch_conf.function(), device_type, this->job_desc());
-    xrt::RunXrtPass("InferShape", graph.get(), options, &this->job_desc(), parallel_ctx,
+    const ParallelDesc& op_parallel_desc = *JUST(GetOpParallelDesc());
+    xrt::RunXrtPass("InferShape", graph.get(), options, &this->job_desc(), parallel_ctx, &op_parallel_desc,
                     &sbp_signatures, &lbn2logical_blob_desc, &blob_descs);
   }
 

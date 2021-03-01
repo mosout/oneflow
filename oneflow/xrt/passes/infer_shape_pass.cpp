@@ -32,6 +32,7 @@ namespace shape_inference {
 
 void InferShape(XrtGraph *graph, const XrtPassOptions &options, const JobDesc *job_desc,
                 const ParallelContext *parallel_ctx,
+                const ParallelDesc *parallel_desc,
                 const util::PbMap<std::string, SbpSignature> *sbp_signatures,
                 const util::PbMap<std::string, BlobDescProto>* lbn2logical_blob_desc_proto,
                 util::Map<std::string, BlobDesc> *blob_descs) {
@@ -40,6 +41,7 @@ void InferShape(XrtGraph *graph, const XrtPassOptions &options, const JobDesc *j
       DeviceType device_type = XrtDeviceToDeviceType(node->device());
       const auto &conf = *dynamic_cast<const OperatorConf *>(&node->param());
       auto op = ConstructOp(conf, device_type, job_desc);
+      JUST(op->FillOpParallelDesc(*parallel_desc));
       auto get_blob_desc_fn = [&](const std::string &bn) -> BlobDesc * {
         const LogicalBlobId &lbi = op->BnInOp2Lbi(bn);
         std::string blob_name = BlobIdToName(lbi);
@@ -89,18 +91,19 @@ class InferShapePass : public XrtPass {
 
   void Run(XrtGraph *graph, const XrtPassOptions &options,
            const std::vector<Any> &params) override {
-    CHECK_EQ(params.size(), 5)
-        << "JobDesc, BlobDesc, ParallelCtx SbpSignatures and lbn2logical_blob_desc_proto are required in "
+    CHECK_EQ(params.size(), 6)
+        << "JobDesc, BlobDesc, ParallelCtx ParallelDesc SbpSignatures and lbn2logical_blob_desc_proto are required in "
            "InferShapePass.";
     const auto *job_desc = any_cast<const JobDesc *>(params[0]);
     const auto *parallel_ctx = any_cast<const ParallelContext *>(params[1]);
+    const auto *parallel_desc = any_cast<const ParallelDesc *>(params[2]);
     const auto *sbp_signatures =
-        any_cast<const util::PbMap<std::string, SbpSignature> *>(params[2]);
+        any_cast<const util::PbMap<std::string, SbpSignature> *>(params[3]);
     const auto *lbn2logical_blob_desc_proto =
-        any_cast<const util::PbMap<std::string, BlobDescProto> *>(params[3]);
-    auto *blob_descs = any_cast<util::Map<std::string, BlobDesc> *>(params[4]);
+        any_cast<const util::PbMap<std::string, BlobDescProto> *>(params[4]);
+    auto *blob_descs = any_cast<util::Map<std::string, BlobDesc> *>(params[5]);
 
-    shape_inference::InferShape(graph, options, job_desc, parallel_ctx, sbp_signatures, lbn2logical_blob_desc_proto, blob_descs);
+    shape_inference::InferShape(graph, options, job_desc, parallel_ctx, parallel_desc, sbp_signatures, lbn2logical_blob_desc_proto, blob_descs);
   }
 };
 
