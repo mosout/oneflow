@@ -351,6 +351,7 @@ message XrtLaunchOpConf {
   map<string, SbpSignature> sbp_signatures = 8;
   optional bool model_update = 9 [default = false];
   map<string, BlobDescProto> input_output_logical_blob_desc = 10;
+  map<string, BlobDescProto> lbn2logical_blob_desc = 11;
 }
 
 message ModelInitV2OpConf {
