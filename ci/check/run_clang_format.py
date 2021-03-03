@@ -28,7 +28,7 @@ def split_and_print(prefix, text):
     lines = text.decode().splitlines(keepends=True)
     prefixed = ""
     for l in lines:
-        prefixed += f"{prefix} {l.strip()}"
+        prefixed += "{} {}".format(prefix, l.strip())
     if l.strip():
         print(prefixed, flush=True)
 
@@ -44,12 +44,12 @@ async def handle_stream(stream, cb):
 
 async def run_command(cmd=None, dry=False, name=None):
     if dry:
-        print(f"[dry] {cmd}")
+        print("[dry] {}".format(cmd))
         return 0
     process = await asyncio.create_subprocess_shell(
         cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
     )
-    l = lambda x: split_and_print(f"[{name}]" if name else "", x)
+    l = lambda x: split_and_print("[{}]".format(name) if name else "", x)
     # l = lambda x: x
     await asyncio.gather(
         handle_stream(process.stdout, l), handle_stream(process.stderr, l),
@@ -65,7 +65,7 @@ def chunks(lst, n):
 
 
 def check_version(bin):
-    out = subprocess.check_output(["bash", "-c", f"{bin} --version"]).decode()
+    out = subprocess.check_output(["bash", "-c", "{} --version".format(bin)]).decode()
     print(out)
     return "version 11.0.0" in out
 
@@ -75,16 +75,16 @@ def download(dry=False):
     if os.getenv("CI"):
         url = "https://github.com/Oneflow-Inc/oneflow-fmt/raw/master/clang-format/linux-x86/clang-format-11"
     dst_dir = ".cache/bin"
-    dst = f"{dst_dir}/clang-format"
+    dst = "{}/clang-format".format(dst_dir)
     if dry:
         if os.path.isfile(dst):
             return dst
         else:
             None
     else:
-        assert subprocess.call(f"mkdir -p {dst_dir}", shell=True) == 0
-        assert subprocess.call(f"curl -L {url} -o {dst}", shell=True) == 0
-        assert subprocess.call(f"chmod +x {dst}", shell=True) == 0
+        assert subprocess.call("mkdir -p {}".format(dst_dir), shell=True) == 0
+        assert subprocess.call("curl -L {} -o {}".format(url, dst), shell=True) == 0
+        assert subprocess.call("chmod +x {}".format(dst), shell=True) == 0
         return dst
 
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
             assert check_version(args.clang_format_binary)
     for chunk in chunks(files, multiprocessing.cpu_count() * 2):
         promises = [
-            run_command(f"{args.clang_format_binary} {clang_fmt_args} {f}")
+            run_command("{} {} {}".format(args.clang_format_binary, clang_fmt_args, f))
             for f in chunk
         ]
         chunk_results = loop.run_until_complete(asyncio.gather(*promises))
