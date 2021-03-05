@@ -60,18 +60,23 @@ class FuseUpdateOpsPass final : public JobPass {
   }
 };
 
+namespace {
+
+bool IsSupportedUpdateOpConf(const OperatorConf& op_conf) {
+  if (!op_conf.has_user_conf()) { return false; }
+  const std::string& op_type_name = op_conf.user_conf().op_type_name();
+  return op_type_name == "sgd_update" || op_type_name == "momentum_update"
+         || op_type_name == "adam_update" || op_type_name == "rmsprop_update"
+         || op_type_name == "lars_update";
+}
+
+}  // namespace
+
 Maybe<void> FuseUpdateOpsPass::Apply(const OpGraph& op_graph, JobBuilder* job_builder) const {
   const auto IsSafeToDelete = MakePredicatorIsSafeToDelete(op_graph);
   op_graph.ForEachNode([&](const OpNode* op_node) {
-    if (!op_node->op().op_conf().has_user_conf()) { return; }
+    if (!IsSupportedUpdateOpConf(op_node->op().op_conf())) { return; }
     const user_op::UserOpConfWrapper user_op_conf(op_node->op().op_conf());
-    if (user_op_conf.op_type_name() != "sgd_update"
-        && user_op_conf.op_type_name() != "momentum_update"
-        && user_op_conf.op_type_name() != "adam_update"
-        && user_op_conf.op_type_name() != "rmsprop_update"
-        && user_op_conf.op_type_name() != "lars_update") {
-      return;
-    }
     if (user_op_conf.attr<double>("scale") != 1.0 || user_op_conf.attr<float>("l1") != 0.0f
         || user_op_conf.attr<float>("l2") != 0.0f) {
       return;
