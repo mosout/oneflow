@@ -121,6 +121,7 @@ class ImageResizeToFixedSizeKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx) const override {
+    oF_PROFILER_RANGE_PUSH("Image Resize To Fixed Size Kernel");
     const user_op::Tensor* in_tensor = ctx->Tensor4ArgNameAndIndex("in", 0);
     CHECK_NOTNULL(in_tensor);
     const int64_t batch_size = in_tensor->shape().elem_cnt();
@@ -173,6 +174,7 @@ class ImageResizeToFixedSizeKernel final : public user_op::OpKernel {
         scale_dptr[1] = static_cast<float>(res_h) / static_cast<float>(origin_height);
       }
     });
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };
