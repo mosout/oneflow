@@ -22,6 +22,7 @@ limitations under the License.
 #include "oneflow/user/image/image_util.h"
 #include "oneflow/user/kernels/random_crop_kernel_state.h"
 #include "oneflow/user/kernels/random_seed_util.h"
+#include "oneflow/core/profiler/profiler.h"
 
 namespace oneflow {
 
@@ -133,6 +134,7 @@ class CropMirrorNormalizeFromStaticShapeToFloatKernel final : public user_op::Op
 
  private:
   void Compute(user_op::KernelComputeContext* ctx, user_op::OpKernelState* state) const override {
+    OF_PROFILER_RANGE_PUSH("crop_mirror_normalize_from_uint8");
     auto* cmn_attr = dynamic_cast<CMNAttr*>(state);
     const std::vector<float>& mean_vec = cmn_attr->mean_vec();
     const std::vector<float>& inv_std_vec = cmn_attr->inv_std_vec();
@@ -192,6 +194,7 @@ class CropMirrorNormalizeFromStaticShapeToFloatKernel final : public user_op::Op
     } else {
       UNIMPLEMENTED();
     }
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };
@@ -214,6 +217,7 @@ class CropMirrorNormalizeFromTensorBufferToFloatKernel final : public user_op::O
 
  private:
   void Compute(user_op::KernelComputeContext* ctx, user_op::OpKernelState* state) const override {
+    OF_PROFILER_RANGE_PUSH("crop_mirror_normalize_from_tensorbuffer");
     auto* cmn_attr = dynamic_cast<CMNAttr*>(state);
     const std::vector<float>& mean_vec = cmn_attr->mean_vec();
     const std::vector<float>& inv_std_vec = cmn_attr->inv_std_vec();
@@ -282,6 +286,7 @@ class CropMirrorNormalizeFromTensorBufferToFloatKernel final : public user_op::O
     } else {
       UNIMPLEMENTED();
     }
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };
@@ -323,12 +328,14 @@ class CoinFlipKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx, user_op::OpKernelState* state) const override {
+    OF_PROFILER_RANGE_PUSH("Coin Flip");
     auto* rand_bool_gen = dynamic_cast<RandBoolGen*>(state);
     user_op::Tensor* out_blob = ctx->Tensor4ArgNameAndIndex("out", 0);
     int8_t* dptr = out_blob->mut_dptr<int8_t>();
     for (int32_t i = 0; i < out_blob->shape().elem_cnt(); ++i) {
       *(dptr + i) = rand_bool_gen->GetNextBool() ? 1 : 0;
     }
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };

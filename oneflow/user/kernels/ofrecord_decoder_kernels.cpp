@@ -25,6 +25,7 @@ limitations under the License.
 #include "oneflow/user/kernels/random_crop_kernel_state.h"
 #include "oneflow/user/kernels/op_kernel_state_wrapper.h"
 #include "oneflow/user/kernels/random_seed_util.h"
+#include "oneflow/core/profiler/profiler.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -78,6 +79,7 @@ class OFRecordRawDecoderKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx) const override {
+    OF_PROFILER_RANGE_PUSH("OFRecord Raw Decoder");
     user_op::Tensor* in_blob = ctx->Tensor4ArgNameAndIndex("in", 0);
     user_op::Tensor* out_blob = ctx->Tensor4ArgNameAndIndex("out", 0);
     // TODO(chengcheng): remove record num in record blob, fix by shape elem cnt
@@ -99,6 +101,7 @@ class OFRecordRawDecoderKernel final : public user_op::OpKernel {
       const Feature& feature = record.feature().at(name);
       DecodeOneRawOFRecord(feature, dptr, sample_elem_cnt, auto_zero_padding, dim1_varying_length);
     });
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };
@@ -225,6 +228,7 @@ class OFRecordImageDecoderRandomCropKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx, user_op::OpKernelState* state) const override {
+    OF_PROFILER_RANGE_PUSH("OFRecord Image Decoder Random Crop");
     auto* crop_window_generators = dynamic_cast<RandomCropKernelState*>(state);
     CHECK_NOTNULL(crop_window_generators);
     user_op::Tensor* out_blob = ctx->Tensor4ArgNameAndIndex("out", 0);
@@ -243,6 +247,7 @@ class OFRecordImageDecoderRandomCropKernel final : public user_op::OpKernel {
       RandomCropGenerator* gen = crop_window_generators->GetGenerator(i);
       DecodeRandomCropImageFromOneRecord(record, buffer, name, color_space, gen);
     });
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };

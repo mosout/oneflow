@@ -18,6 +18,7 @@ limitations under the License.
 #include "oneflow/user/image/image_util.h"
 #include <opencv2/opencv.hpp>
 #include <cfenv>
+#include "oneflow/core/profiler/profiler.h"
 
 namespace oneflow {
 
@@ -183,6 +184,7 @@ class ImageResizeKeepAspectRatioKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx) const override {
+    OF_PROFILER_RANGE_PUSH("Image Resize Keep Aspect Ratio Kernel");
     const user_op::Tensor* in_tensor = ctx->Tensor4ArgNameAndIndex("in", 0);
     user_op::Tensor* out_tensor = ctx->Tensor4ArgNameAndIndex("out", 0);
     user_op::Tensor* size_tensor = ctx->Tensor4ArgNameAndIndex("size", 0);
@@ -218,6 +220,7 @@ class ImageResizeKeepAspectRatioKernel final : public user_op::OpKernel {
       size_buf[i].mut_data<int32_t>()[0] = static_cast<int32_t>(res_w);
       size_buf[i].mut_data<int32_t>()[1] = static_cast<int32_t>(res_h);
     });
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };

@@ -15,6 +15,7 @@ limitations under the License.
 */
 #include "oneflow/core/framework/framework.h"
 #include "oneflow/user/data/ofrecord_data_reader.h"
+#include "oneflow/core/profiler/profiler.h"
 
 namespace oneflow {
 
@@ -46,8 +47,10 @@ class OFRecordReaderKernel final : public user_op::OpKernel {
 
  private:
   void Compute(user_op::KernelComputeContext* ctx, user_op::OpKernelState* state) const override {
+    OF_PROFILER_RANGE_PUSH("OFRecord Reader");
     auto* reader = dynamic_cast<OFRecordReaderWrapper*>(state);
     reader->Read(ctx);
+    OF_PROFILER_RANGE_POP();
   }
   bool AlwaysComputeWhenAllOutputsEmpty() const override { return false; }
 };
