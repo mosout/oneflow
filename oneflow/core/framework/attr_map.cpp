@@ -121,6 +121,14 @@ AttrMap MakeAttrMapFromUserOpConf(const UserOpConf& user_op_conf) {
   return AttrMap(attrs);
 }
 
+std::string ComposedAttrMap::ToString() const {
+  std::stringstream ss;
+  for (const auto& attr : base_) {
+    ss << attr.first << "=" << attr.second->ToString() << ", ";
+  }
+  return ss.str();
+}
+
 template<typename T>
 Maybe<const T&> ComposedAttrMap::GetAttr(const std::string& attr_name) const {
   const auto& attr = Attr4Name(attr_name);

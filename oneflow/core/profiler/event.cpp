@@ -76,8 +76,6 @@ std::shared_ptr<KernelEvent> KernelEvent::Create(
   return std::shared_ptr<KernelEvent>(new KernelEvent(name, shape_getter));
 }
 
-void KernelEvent::RecordShape(const ShapeView& shape) { input_shapes_.emplace_back(shape); }
-
 std::string KernelEvent::GetFormatedInputShapes(size_t max_num_to_format) {
   if (input_shapes_.size() == 0) { return "-"; }
   std::vector<std::string> shapes_formated(std::min(input_shapes_.size(), max_num_to_format));
