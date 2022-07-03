@@ -140,8 +140,6 @@ class KernelEvent final : public IEvent {
   static std::shared_ptr<KernelEvent> Create(
       const std::string& name, const std::function<std::vector<ShapeView>(void)>& shape_getter);
 
-  void RecordShape(const ShapeView& shape);
-
 #if defined(WITH_CUDA)
   void SetMemorySize(int64_t memory_size) { memory_size_ = memory_size; }
   void AddChildEvent(const std::shared_ptr<IEvent>& e) { children_.emplace(e); }
@@ -161,16 +159,15 @@ class KernelEvent final : public IEvent {
  private:
   KernelEvent(const std::string& kernel_name,
               const std::function<std::vector<ShapeView>(void)>& shape_getter)
-      : IEvent(kernel_name, EventTimeUnit::kNS) {
-    if (shape_getter) { input_shapes_ = shape_getter(); }
-  }
+      : IEvent(kernel_name, EventTimeUnit::kNS),
+        input_shapes_(shape_getter ? shape_getter() : std::vector<ShapeView>{}) {}
 
 #if defined(WITH_CUDA)
   int64_t memory_size_ = -1;
   std::set<std::shared_ptr<IEvent>> children_;
 #endif  // WITH_CUDA
 
-  std::vector<ShapeView> input_shapes_;
+  const std::vector<ShapeView> input_shapes_;
   std::string GetFormatedInputShapes(size_t max_num_to_format = 4);
 };
 
